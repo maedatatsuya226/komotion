@@ -36,6 +36,9 @@
   .game-card[data-game="balloon"] { transform: rotate(-1.2deg); }
   .game-card[data-game="fruit"] { transform: rotate(0.8deg); }
   .game-card[data-game="balance"] { transform: rotate(-0.6deg); }
+  .game-card[data-game="mole"] { transform: rotate(0.9deg); }
+  .game-card[data-game="butterfly"] { transform: rotate(-0.8deg); }
+  .game-card[data-game="color"] { transform: rotate(0.7deg); }
   .game-card:hover { transform: rotate(0deg) translateY(-4px); box-shadow: 0 9px 0 #EADFC9; }
   .game-card .icon { font-size: clamp(48px, 8vw, 76px); }
   .game-card .name { font-size: clamp(19px, 2.8vw, 25px); font-weight: 700; margin: 10px 0 8px; }
@@ -47,6 +50,12 @@
   .game-card[data-game="fruit"] .tag { background: #E3F0DB; color: #3E7A33; }
   .game-card[data-game="balance"] .name { color: #4C7FD9; }
   .game-card[data-game="balance"] .tag { background: #E0EAFB; color: #2F5CAB; }
+  .game-card[data-game="mole"] .name { color: #B07B2E; }
+  .game-card[data-game="mole"] .tag { background: #F7E8CE; color: #8A5A18; }
+  .game-card[data-game="butterfly"] .name { color: #8B6FC9; }
+  .game-card[data-game="butterfly"] .tag { background: #EDE6F8; color: #6B4FA8; }
+  .game-card[data-game="color"] .name { color: #D4537E; }
+  .game-card[data-game="color"] .tag { background: #FBE3ED; color: #A83563; }
   .privacy-note { margin-top: 22px; font-size: clamp(11px, 1.6vw, 13px); color: #A08F75; text-align: center; line-height: 1.6; }
 
   /* ===== 設定画面 ===== */
@@ -156,6 +165,24 @@
       <div class="name">キャッチバランス</div>
       <div class="desc">からだを左右にかたむけて<br>落ちてくるものをキャッチ！</div>
       <div class="tag">バランス・重心移動（立位/座位）</div>
+    </div>
+    <div class="game-card" data-game="mole">
+      <div class="icon">🐹</div>
+      <div class="name">もぐらたたき</div>
+      <div class="desc">あなから顔を出すもぐらを<br>すばやくタッチ！</div>
+      <div class="tag">反応スピード・交互リーチ</div>
+    </div>
+    <div class="game-card" data-game="butterfly">
+      <div class="icon">🦋</div>
+      <div class="name">ちょうちょ</div>
+      <div class="desc">お花に手を伸ばしてキープすると<br>ちょうちょがとまるよ！</div>
+      <div class="tag">ゆっくり正確に・保持</div>
+    </div>
+    <div class="game-card" data-game="color">
+      <div class="icon">🎨</div>
+      <div class="name">いろタッチ</div>
+      <div class="desc">「あかをタッチ！」<br>よく見て・考えてタッチ！</div>
+      <div class="tag">あたま＋からだ（二重課題）</div>
     </div>
   </div>
   <div class="privacy-note">
@@ -268,6 +295,48 @@ const GAMES = {
     ],
     defaults: { posture: "stand", part: "hip", shift: "normal", size: "medium", speed: "slow", zoom: "auto", duration: "60" },
   },
+  mole: {
+    name: "🐹 もぐらたたき",
+    scoreLabel: "たたいた数", totalLabel: "出たもぐら",
+    lostMsg: "カメラに映ってください",
+    settings: [
+      OPT.hand,
+      { label: "もぐらが出る場所", key: "range", options: [["all","ぜんたい"],["upper","上のほう"],["lower","下のほう"],["rightSide","右がわ"],["leftSide","左がわ"]] },
+      { ...OPT.size, label: "もぐらの大きさ" },
+      { label: "スピード（もぐらが出ている時間）", key: "speed", options: [["slow","ゆっくり（2.5秒）"],["normal","ふつう（1.8秒）"],["fast","はやい（1.2秒）"]] },
+      OPT.zoom,
+      OPT.duration,
+    ],
+    defaults: { hand: "both", range: "all", size: "medium", speed: "slow", zoom: "auto", duration: "60" },
+  },
+  butterfly: {
+    name: "🦋 ちょうちょ",
+    scoreLabel: "とまった数", totalLabel: "出たお花",
+    lostMsg: "カメラに映ってください",
+    settings: [
+      OPT.hand,
+      { label: "お花が出る場所", key: "range", options: [["all","ぜんたい"],["upper","上のほう"],["lower","下のほう"],["rightSide","右がわ"],["leftSide","左がわ"]] },
+      { ...OPT.size, label: "お花の大きさ" },
+      { label: "キープ時間（手を止めておく長さ）", key: "hold", options: [["1","1秒"],["2","2秒"],["3","3秒"]] },
+      OPT.zoom,
+      OPT.duration,
+    ],
+    defaults: { hand: "both", range: "all", size: "medium", hold: "2", zoom: "auto", duration: "60" },
+  },
+  color: {
+    name: "🎨 いろタッチ",
+    scoreLabel: "せいかい", totalLabel: "もんだい数",
+    lostMsg: "カメラに映ってください",
+    settings: [
+      { label: "課題のしゅるい", key: "mode", options: [["color","いろ（あかをタッチ！）"],["calc","けいさん（3＋4は？）"]] },
+      OPT.hand,
+      { ...OPT.size, label: "まるの大きさ" },
+      { label: "こたえる時間", key: "speed", options: [["slow","ゆっくり（10秒）"],["normal","ふつう（7秒）"],["fast","はやい（5秒）"]] },
+      OPT.zoom,
+      OPT.duration,
+    ],
+    defaults: { mode: "color", hand: "both", size: "medium", speed: "slow", zoom: "auto", duration: "60" },
+  },
 };
 // 保存された設定(ゲームごと・端末に記憶)
 const LS_KEY = "reachTrainingSettings.v1";
@@ -369,6 +438,8 @@ function playPop() {
 function playPick() { tone(520, 0.12, "triangle", 0.3); }
 function playChime() { tone(660, 0.2, "triangle", 0.35); tone(880, 0.35, "triangle", 0.35, 0.12); }
 function playCatch() { tone(587, 0.15, "triangle", 0.35); tone(784, 0.25, "triangle", 0.35, 0.1); }
+function playBuzz() { tone(170, 0.2, "square", 0.18); tone(130, 0.25, "square", 0.15, 0.05); }
+function playBonk() { tone(300, 0.08, "square", 0.3); tone(200, 0.12, "square", 0.25, 0.06); }
 function playCount(final) { tone(final ? 880 : 440, final ? 0.5 : 0.2); }
 function playFanfare() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.4, "triangle", 0.3, i * 0.15)); }
 
@@ -756,6 +827,7 @@ const GAME_IMPL = {
       balloons.push({
         x: xMin + Math.random() * (xMax - xMin), y: yMin + Math.random() * (yMax - yMin),
         r, handReq, colorPair, born: now, life: SPEED.life, phase: Math.random() * Math.PI * 2, wrongHandFlash: 0,
+        armed: false,  // 出現時から手が重なっている間は、一度離れるまで判定しない
       });
       state.total++;
     }
@@ -778,14 +850,18 @@ const GAME_IMPL = {
         for (const b of [...balloons]) {
           const age = t - b.born;
           if (age > b.life) { balloons.splice(balloons.indexOf(b), 1); continue; }
+          let inside = false;
           for (const side of ["left", "right"]) {
             const h = track.hands[side];
             if (!h) continue;
             if (Math.hypot(h.x - b.x, h.y - b.y) < b.r + handR) {
+              inside = true;
+              if (!b.armed) continue;
               if (b.handReq && b.handReq !== side) b.wrongHandFlash = t;
               else { pop(b, t); break; }
             }
           }
+          if (!inside) b.armed = true;
         }
 
         for (const b of balloons) {
@@ -860,7 +936,7 @@ const GAME_IMPL = {
             emoji: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
             handReq: pickHandReq(vals.hand),
             born: t, life: SPEED.life, state: "hanging", vy: 0, phase: Math.random() * Math.PI * 2,
-            lostSince: 0, wrongHandFlash: 0,
+            lostSince: 0, wrongHandFlash: 0, armed: false,
           });
           state.total++;
           lastSpawn = t;
@@ -870,16 +946,20 @@ const GAME_IMPL = {
           if (f.state === "hanging") {
             if (t - f.born > f.life) { f.state = "falling"; continue; }
             // つかむ判定
+            let inside = false;
             for (const side of ["left", "right"]) {
               const hd = track.hands[side];
               if (!hd || holding[side]) continue;
               if (Math.hypot(hd.x - f.x, hd.y - f.y) < fruitR * 1.15 + handR) {
+                inside = true;
+                if (!f.armed) continue;
                 if (f.handReq && f.handReq !== side) { f.wrongHandFlash = t; continue; }
                 f.state = "held"; f.heldBy = side; holding[side] = f;
                 playPick();
                 break;
               }
             }
+            if (!inside) f.armed = true;
           } else if (f.state === "held") {
             const hd = track.hands[f.heldBy];
             if (hd) {
@@ -1072,6 +1152,367 @@ const GAME_IMPL = {
       },
     };
     return self;
+  },
+
+  // ---------- 🐹 もぐらたたき ----------
+  mole(vals) {
+    const UP = { slow: 2500, normal: 1800, fast: 1200 }[vals.speed];
+    const INTERVAL = { slow: 1700, normal: 1250, fast: 900 }[vals.speed];
+    const HOLES = [
+      { x: 0.20, y: 0.34 }, { x: 0.50, y: 0.30 }, { x: 0.80, y: 0.34 },
+      { x: 0.20, y: 0.66 }, { x: 0.50, y: 0.70 }, { x: 0.80, y: 0.66 },
+    ].filter(h => {
+      if (vals.range === "upper") return h.y < 0.5;
+      if (vals.range === "lower") return h.y > 0.5;
+      if (vals.range === "rightSide") return h.x > 0.55;
+      if (vals.range === "leftSide") return h.x < 0.45;
+      return true;
+    });
+    const moles = HOLES.map(h => ({ ...h, state: "down", since: 0, handReq: null, wrongHandFlash: 0 }));
+    let lastSpawn = 0;
+
+    return {
+      ready: true,
+      instruction: handInstruction(vals.hand, "もぐらを タッチ！"),
+      update(t) {
+        const w = canvas.width, h = canvas.height;
+        const r = SIZE_MAP[vals.size] * h * 1.1;
+        const handR = h * 0.03;
+
+        // 出現
+        const upCount = moles.filter(m => m.state === "up").length;
+        if (t - lastSpawn > INTERVAL && upCount < 2) {
+          const downs = moles.filter(m => m.state === "down");
+          if (downs.length > 0) {
+            const m = downs[Math.floor(Math.random() * downs.length)];
+            m.state = "up"; m.since = t; m.handReq = pickHandReq(vals.hand); m.wrongHandFlash = 0; m.armed = false;
+            state.total++;
+            lastSpawn = t;
+          }
+        }
+
+        for (const m of moles) {
+          const mx = m.x * w, my = m.y * h;
+          if (m.state === "up") {
+            if (t - m.since > UP) { m.state = "down"; continue; }
+            let inside = false;
+            for (const side of ["left", "right"]) {
+              const hd = track.hands[side];
+              if (!hd) continue;
+              if (Math.hypot(hd.x - mx, hd.y - my) < r * 1.15 + handR) {
+                inside = true;
+                if (!m.armed) continue;
+                if (m.handReq && m.handReq !== side) { m.wrongHandFlash = t; }
+                else { m.state = "hit"; m.since = t; addScore(); playBonk(); break; }
+              }
+            }
+            if (!inside) m.armed = true;
+          } else if (m.state === "hit") {
+            if (t - m.since > 500) m.state = "down";
+          }
+        }
+
+        // ---- 描画 ----
+        for (const m of moles) {
+          const mx = m.x * w, my = m.y * h;
+          // あな
+          ctx.fillStyle = "rgba(50, 33, 20, 0.6)";
+          ctx.beginPath(); ctx.ellipse(mx, my + r * 0.55, r * 1.3, r * 0.45, 0, 0, Math.PI * 2); ctx.fill();
+          if (m.state === "down") continue;
+          const rise = m.state === "hit" ? 1 : Math.min(1, (t - m.since) / 150);
+          const rr = r * rise;
+          const cy = my - r * 0.15 * rise;
+          // からだ
+          ctx.fillStyle = "#8a6a4f";
+          ctx.strokeStyle = "#5c4432"; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(mx, cy, rr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          // くち元
+          ctx.fillStyle = "#c9a98b";
+          ctx.beginPath(); ctx.ellipse(mx, cy + rr * 0.35, rr * 0.5, rr * 0.38, 0, 0, Math.PI * 2); ctx.fill();
+          // はな
+          ctx.fillStyle = "#e88ba0";
+          ctx.beginPath(); ctx.ellipse(mx, cy + rr * 0.15, rr * 0.16, rr * 0.12, 0, 0, Math.PI * 2); ctx.fill();
+          // め(たたかれたら×)
+          ctx.strokeStyle = "#3a2a1c"; ctx.fillStyle = "#3a2a1c"; ctx.lineWidth = Math.max(2, rr * 0.06);
+          const ey = cy - rr * 0.2, ex = rr * 0.35;
+          if (m.state === "hit") {
+            for (const s of [-1, 1]) {
+              ctx.beginPath();
+              ctx.moveTo(mx + s * ex - rr * 0.12, ey - rr * 0.12); ctx.lineTo(mx + s * ex + rr * 0.12, ey + rr * 0.12);
+              ctx.moveTo(mx + s * ex + rr * 0.12, ey - rr * 0.12); ctx.lineTo(mx + s * ex - rr * 0.12, ey + rr * 0.12);
+              ctx.stroke();
+            }
+            ctx.font = `${rr * 0.9}px serif`;
+            ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillText("💫", mx + rr * 0.9, cy - rr * 0.9);
+          } else {
+            for (const s of [-1, 1]) {
+              ctx.beginPath(); ctx.arc(mx + s * ex, ey, rr * 0.09, 0, Math.PI * 2); ctx.fill();
+            }
+          }
+          // のこり時間リング
+          if (m.state === "up") {
+            const remain = 1 - (t - m.since) / UP;
+            ctx.strokeStyle = "rgba(255,210,74,0.9)"; ctx.lineWidth = 5;
+            ctx.beginPath(); ctx.arc(mx, cy, rr * 1.25, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * remain); ctx.stroke();
+          }
+          if (m.handReq && m.state === "up") drawHandBadge(mx + rr * 0.95, cy - rr * 0.95, rr * 0.38, m.handReq);
+          if (m.handReq && m.wrongHandFlash > 0 && t - m.wrongHandFlash < 600) {
+            ctx.strokeStyle = "#fff"; ctx.lineWidth = 4; ctx.setLineDash([8, 6]);
+            ctx.beginPath(); ctx.arc(mx, cy, rr * 1.4, 0, Math.PI * 2); ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        }
+        drawHandMarkers(handR);
+      },
+    };
+  },
+
+  // ---------- 🦋 ちょうちょ ----------
+  butterfly(vals) {
+    const HOLD = parseInt(vals.hold) * 1000;
+    const LIFE = 15000;
+    let flower = null, progress = 0, celebrateUntil = 0;
+    const sparkles = [];
+    let lastT = 0;
+
+    function spawn(t) {
+      const r = SIZE_MAP[vals.size] * canvas.height;
+      const m = r * 1.6;
+      let xMin = m, xMax = canvas.width - m, yMin = m + canvas.height * 0.1, yMax = canvas.height - m;
+      if (vals.range === "upper") yMax = canvas.height * 0.5;
+      if (vals.range === "lower") yMin = canvas.height * 0.5;
+      if (vals.range === "rightSide") xMin = canvas.width * 0.55;
+      if (vals.range === "leftSide") xMax = canvas.width * 0.45;
+      // 手の真下に出ると動かさず得点できてしまうため、手から離れた場所を選ぶ
+      let x = 0, y = 0;
+      for (let i = 0; i < 10; i++) {
+        x = xMin + Math.random() * (xMax - xMin);
+        y = yMin + Math.random() * (yMax - yMin);
+        const nearHand = ["left", "right"].some(s => {
+          const hd = track.hands[s];
+          return hd && Math.hypot(hd.x - x, hd.y - y) < r * 3.5;
+        });
+        if (!nearHand) break;
+      }
+      flower = { x, y, r, handReq: pickHandReq(vals.hand), born: t };
+      progress = 0;
+      state.total++;
+    }
+
+    return {
+      ready: true,
+      instruction: (() => {
+        const sec = vals.hold;
+        if (vals.hand === "right") return { text: `右手を お花に ${sec}秒 キープ！`, cls: "right" };
+        if (vals.hand === "left") return { text: `左手を お花に ${sec}秒 キープ！`, cls: "left" };
+        return { text: `お花に 手を ${sec}秒 キープ！`, cls: "" };
+      })(),
+      update(t) {
+        const h = canvas.height;
+        const handR = h * 0.03;
+        const dt = lastT ? Math.min(50, t - lastT) : 16;
+        lastT = t;
+
+        if (t < celebrateUntil) {
+          // ちょうちょがとまっている演出中
+        } else {
+          if (!flower) spawn(t);
+          if (flower && t - flower.born > LIFE && progress <= 0) { spawn(t); }
+
+          // ホールド判定
+          let inHold = false, wrongTouch = false;
+          for (const side of ["left", "right"]) {
+            const hd = track.hands[side];
+            if (!hd) continue;
+            if (Math.hypot(hd.x - flower.x, hd.y - flower.y) < flower.r * 1.5 + handR) {
+              if (flower.handReq && flower.handReq !== side) wrongTouch = true;
+              else inHold = true;
+            }
+          }
+          if (wrongTouch && !inHold) flower.wrongHandFlash = t;
+          progress = inHold ? Math.min(HOLD, progress + dt) : Math.max(0, progress - dt * 1.5);
+
+          if (progress >= HOLD) {
+            addScore(); playChime();
+            progress = 0;
+            celebrateUntil = t + 1400;
+            for (let i = 0; i < 12; i++) {
+              const a = Math.random() * Math.PI * 2, sp = 1.5 + Math.random() * 3;
+              sparkles.push({ x: flower.x, y: flower.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 2, born: t });
+            }
+          }
+        }
+
+        // ---- 描画 ----
+        if (flower) {
+          const { x, y, r } = flower;
+          const done = t < celebrateUntil;
+          // お花
+          ctx.font = `${r * 2}px serif`;
+          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillText("🌼", x, y);
+          // ホールドの輪
+          const p = done ? 1 : progress / HOLD;
+          ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 7;
+          ctx.beginPath(); ctx.arc(x, y, r * 1.5, 0, Math.PI * 2); ctx.stroke();
+          ctx.strokeStyle = "#e88ba0"; ctx.lineWidth = 7;
+          ctx.beginPath(); ctx.arc(x, y, r * 1.5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p); ctx.stroke();
+          // ちょうちょ: 近づいてきて、完成でお花にとまる
+          if (p > 0 || done) {
+            const bx = done ? x : x + r * 3.2 * (1 - p);
+            const by = (done ? y - r * 1.15 : y - r * 3.2 * (1 - p)) + (done ? 0 : Math.sin(t / 130) * r * 0.18);
+            ctx.font = `${r * 1.5}px serif`;
+            ctx.fillText("🦋", bx, by);
+          }
+          if (flower.handReq && !done) drawHandBadge(x + r * 1.3, y - r * 1.3, r * 0.42, flower.handReq);
+          if (flower.handReq && flower.wrongHandFlash > 0 && t - flower.wrongHandFlash < 600) {
+            ctx.strokeStyle = "#fff"; ctx.lineWidth = 4; ctx.setLineDash([8, 6]);
+            ctx.beginPath(); ctx.arc(x, y, r * 1.8, 0, Math.PI * 2); ctx.stroke();
+            ctx.setLineDash([]);
+          }
+          // 演出が終わったら次のお花へ
+          if (done && t >= celebrateUntil - 20) { /* 次フレームで判定 */ }
+          if (celebrateUntil > 0 && t >= celebrateUntil) { celebrateUntil = 0; spawn(t); }
+        }
+        for (const s of [...sparkles]) {
+          const age = t - s.born;
+          if (age > 700) { sparkles.splice(sparkles.indexOf(s), 1); continue; }
+          s.x += s.vx; s.y += s.vy; s.vy += 0.12;
+          ctx.globalAlpha = 1 - age / 700;
+          ctx.fillStyle = "#ffd24a";
+          ctx.beginPath(); ctx.arc(s.x, s.y, 5, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        drawHandMarkers(handR);
+      },
+    };
+  },
+
+  // ---------- 🎨 いろタッチ ----------
+  color(vals) {
+    const LIFE = { slow: 10000, normal: 7000, fast: 5000 }[vals.speed];
+    const COLORS = [
+      { label: "あか", fill: "#E24B4A" }, { label: "あお", fill: "#378ADD" },
+      { label: "きいろ", fill: "#F2C12E" }, { label: "みどり", fill: "#5B9E4D" },
+    ];
+    let round = null;
+    const sparkles = [];
+
+    function newRound(t) {
+      state.total++;
+      const handReq = pickHandReq(vals.hand);
+      const targets = [];
+      const slots = [0.22, 0.5, 0.78].sort(() => Math.random() - 0.5);
+      let instText;
+      if (vals.mode === "calc") {
+        const a = 1 + Math.floor(Math.random() * 5), b = 1 + Math.floor(Math.random() * 4);
+        const ans = a + b;
+        const values = new Set([ans]);
+        while (values.size < 3) {
+          const d = ans + (Math.floor(Math.random() * 5) - 2);
+          if (d > 0 && d !== ans) values.add(d);
+        }
+        [...values].forEach((v, i) => targets.push({ value: String(v), fill: "#6B4FA8", correct: v === ans, slot: slots[i] }));
+        instText = `${a} ＋ ${b} は？`;
+      } else {
+        const shuffled = [...COLORS].sort(() => Math.random() - 0.5).slice(0, 3);
+        const correct = shuffled[Math.floor(Math.random() * 3)];
+        shuffled.forEach((c, i) => targets.push({ value: "", fill: c.fill, correct: c === correct, slot: slots[i] }));
+        instText = `${correct.label} を タッチ！`;
+      }
+      if (handReq) instText = (handReq === "right" ? "右手で " : "左手で ") + instText;
+      const inst = $("instruction");
+      inst.textContent = instText;
+      inst.className = handReq ? (handReq === "right" ? "right" : "left") : "";
+      targets.forEach(tg => { tg.yFrac = 0.42 + (Math.random() - 0.5) * 0.16; tg.wrongFlash = 0; });
+      round = { targets, handReq, born: t, doneAt: 0, armed: false };
+    }
+
+    return {
+      ready: true,
+      instruction: { text: "よく みて タッチ！", cls: "" },
+      update(t) {
+        const w = canvas.width, h = canvas.height;
+        const r = SIZE_MAP[vals.size] * h * 1.15;
+        const handR = h * 0.03;
+
+        if (!round) newRound(t);
+        if (round.doneAt && t - round.doneAt > 800) newRound(t);
+        else if (!round.doneAt && t - round.born > LIFE) newRound(t);
+
+        // タッチ判定(ラウンド開始時から手が円に重なっている場合は、一度離れてから)
+        if (!round.doneAt && !round.armed) {
+          const anyInside = round.targets.some(tg =>
+            ["left", "right"].some(side => {
+              const hd = track.hands[side];
+              return hd && Math.hypot(hd.x - tg.slot * w, hd.y - tg.yFrac * h) < r + handR;
+            }));
+          if (!anyInside) round.armed = true;
+        }
+        if (!round.doneAt && round.armed) {
+          for (const tg of round.targets) {
+            const tx = tg.slot * w, ty = tg.yFrac * h;
+            for (const side of ["left", "right"]) {
+              const hd = track.hands[side];
+              if (!hd) continue;
+              if (Math.hypot(hd.x - tx, hd.y - ty) < r + handR) {
+                if (round.handReq && round.handReq !== side) {
+                  if (t - (tg.wrongFlash || 0) > 800) { tg.wrongFlash = t; playBuzz(); }
+                } else if (tg.correct) {
+                  round.doneAt = t; addScore(); playChime();
+                  for (let i = 0; i < 12; i++) {
+                    const a = Math.random() * Math.PI * 2, sp = 1.5 + Math.random() * 3.5;
+                    sparkles.push({ x: tx, y: ty, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 2, born: t });
+                  }
+                } else {
+                  if (t - (tg.wrongFlash || 0) > 800) { tg.wrongFlash = t; playBuzz(); }
+                }
+              }
+            }
+          }
+        }
+
+        // ---- 描画 ----
+        // のこり時間バー
+        if (!round.doneAt) {
+          const remain = Math.max(0, 1 - (t - round.born) / LIFE);
+          ctx.fillStyle = "rgba(255,255,255,0.25)";
+          ctx.fillRect(w * 0.25, h * 0.13, w * 0.5, 8);
+          ctx.fillStyle = "#ffd24a";
+          ctx.fillRect(w * 0.25, h * 0.13, w * 0.5 * remain, 8);
+        }
+        for (const tg of round.targets) {
+          const tx = tg.slot * w, ty = tg.yFrac * h;
+          const isDone = round.doneAt && tg.correct;
+          const shake = tg.wrongFlash && t - tg.wrongFlash < 500 ? Math.sin((t - tg.wrongFlash) / 30) * r * 0.08 : 0;
+          ctx.fillStyle = tg.fill;
+          ctx.strokeStyle = "#fff"; ctx.lineWidth = 5;
+          ctx.beginPath(); ctx.arc(tx + shake, ty, isDone ? r * 1.15 : r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          if (tg.value) {
+            ctx.fillStyle = "#fff";
+            ctx.font = `bold ${r * 0.9}px sans-serif`;
+            ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillText(tg.value, tx + shake, ty);
+          }
+          if (isDone) {
+            ctx.font = `${r * 0.8}px serif`;
+            ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillText("⭕", tx, ty - r * 1.5);
+          }
+        }
+        for (const s of [...sparkles]) {
+          const age = t - s.born;
+          if (age > 700) { sparkles.splice(sparkles.indexOf(s), 1); continue; }
+          s.x += s.vx; s.y += s.vy; s.vy += 0.12;
+          ctx.globalAlpha = 1 - age / 700;
+          ctx.fillStyle = "#ffd24a";
+          ctx.beginPath(); ctx.arc(s.x, s.y, 5, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        drawHandMarkers(handR);
+      },
+    };
   },
 };
 </script>
