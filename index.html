@@ -483,15 +483,28 @@ function updateTracking(landmarks) {
     const w = Math.abs(landmarks[11].x - landmarks[12].x) * W * state.zoomCur;
     if (w > 10) track.bodyScale = track.bodyScale ? track.bodyScale + (w - track.bodyScale) * 0.2 : w;
 
-    // オートフレーミング: 肩幅が画面の約22%になるようゆっくりズームし、胸のあたりを中心に追従する
+    // オートフレーミング: 開始直後に肩幅が画面の約22%になるよう合わせ、合ったらロックして動かさない。
+    // 患者さんが大きく移動してずれが続いたときだけ、一度合わせ直して再ロックする。
     if (state.zoomMode === "auto") {
       const wNorm = Math.abs(landmarks[11].x - landmarks[12].x);
       const targetZ = Math.min(2.2, Math.max(1, 0.22 / Math.max(wNorm, 0.05)));
-      state.zoomCur += (targetZ - state.zoomCur) * 0.03;
       const cx = (landmarks[11].x + landmarks[12].x) / 2;
       const cy = (landmarks[11].y + landmarks[12].y) / 2 + 0.08;
-      state.panX += (cx - state.panX) * 0.05;
-      state.panY += (cy - state.panY) * 0.05;
+      if (!state.frameLocked) {
+        state.zoomCur += (targetZ - state.zoomCur) * 0.06;
+        state.panX += (cx - state.panX) * 0.08;
+        state.panY += (cy - state.panY) * 0.08;
+        const settled = Math.abs(targetZ - state.zoomCur) < 0.06 && Math.hypot(cx - state.panX, cy - state.panY) < 0.025;
+        state.settleCount = settled ? state.settleCount + 1 : 0;
+        if (state.settleCount > 30) { state.frameLocked = true; state.badCount = 0; }
+      } else if (currentGameId !== "balance") {
+        // バランスは基準位置がずれるためロック後は固定のまま
+        const off = Math.max(Math.abs(cx - state.panX), Math.abs(cy - state.panY));
+        const zr = targetZ / state.zoomCur;
+        const bad = off > 0.10 || zr > 1.25 || zr < 0.8;
+        state.badCount = bad ? state.badCount + 1 : 0;
+        if (state.badCount > 45) { state.frameLocked = false; state.settleCount = 0; }
+      }
     }
   }
 }
@@ -510,9 +523,11 @@ if (DEBUG) {
 const state = {
   running: false, score: 0, total: 0, remainMs: 0, clock: 0, lastReal: 0,
   zoomMode: "auto",          // "auto" または固定倍率の文字列
-  zoomCur: 1,                // 現在のズーム倍率(自動モードではゆっくり追従)
-  panX: 0.5, panY: 0.5,      // 切り出し中心(自動モードで本人を追う)
+  zoomCur: 1,                // 現在のズーム倍率
+  panX: 0.5, panY: 0.5,      // 切り出し中心
   crop: null,                // 今フレームの切り出し矩形
+  frameLocked: false,        // 自動フレーミング: 合わせ終わったら固定する
+  settleCount: 0, badCount: 0,
 };
 let currentGame = null; // 実行中のゲームロジック
 
@@ -665,6 +680,8 @@ async function startGame(gameId) {
   state.zoomMode = vals.zoom || "auto";
   state.zoomCur = state.zoomMode === "auto" ? 1 : parseFloat(state.zoomMode);
   state.panX = 0.5; state.panY = 0.5; state.crop = null;
+  state.frameLocked = DEBUG;  // デバッグ時は実カメラがないため常にロック扱い
+  state.settleCount = 0; state.badCount = 0;
   poseLock = null;
   $("scoreVal").textContent = "0";
   requestAnimationFrame(mainLoop);
@@ -965,7 +982,8 @@ const GAME_IMPL = {
         // ---- キャリブレーション(最初にまっすぐ立った位置を基準にする) ----
         const part = track.parts[vals.part];
         if (neutralX === null) {
-          if (part && track.bodyScale) {
+          // 自動フレーミング中は画面が動くため、フレーミング確定後に基準位置を計測する
+          if (part && track.bodyScale && (state.zoomMode !== "auto" || state.frameLocked)) {
             calibSamples.push(part.x);
             if (calibSamples.length >= 45) {
               neutralX = calibSamples.reduce((a, b) => a + b, 0) / calibSamples.length;
