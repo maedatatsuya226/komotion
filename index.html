@@ -218,7 +218,7 @@ const video = $("video"), canvas = $("gameCanvas"), ctx = canvas.getContext("2d"
 const OPT = {
   hand: { label: "つかう手", key: "hand", options: [["both","どちらでも"],["right","右手だけ"],["left","左手だけ"],["random","指定ランダム"]] },
   size: { label: "大きさ", key: "size", options: [["large","大きい"],["medium","ふつう"],["small","小さい"]] },
-  zoom: { label: "カメラズーム（はなれていても届くように）", key: "zoom", options: [["1","標準"],["1.3","1.3倍"],["1.6","1.6倍"],["2","2倍"]] },
+  zoom: { label: "カメラズーム（はなれていても届くように）", key: "zoom", options: [["auto","自動（おすすめ）"],["1","標準"],["1.3","1.3倍"],["1.6","1.6倍"],["2","2倍"]] },
   duration: { label: "トレーニング時間", key: "duration", options: [["60","1分"],["120","2分"],["180","3分"]] },
 };
 const SIZE_MAP = { large: 0.10, medium: 0.075, small: 0.055 };
@@ -237,7 +237,7 @@ const GAMES = {
       OPT.zoom,
       OPT.duration,
     ],
-    defaults: { hand: "both", range: "all", size: "medium", speed: "slow", zoom: "1", duration: "60" },
+    defaults: { hand: "both", range: "all", size: "medium", speed: "slow", zoom: "auto", duration: "60" },
   },
   fruit: {
     name: "🍎 くだもの収穫",
@@ -251,7 +251,7 @@ const GAMES = {
       OPT.zoom,
       OPT.duration,
     ],
-    defaults: { hand: "both", basket: "center", size: "medium", speed: "slow", zoom: "1", duration: "60" },
+    defaults: { hand: "both", basket: "center", size: "medium", speed: "slow", zoom: "auto", duration: "60" },
   },
   balance: {
     name: "🧺 キャッチバランス",
@@ -266,7 +266,7 @@ const GAMES = {
       OPT.zoom,
       OPT.duration,
     ],
-    defaults: { posture: "stand", part: "hip", shift: "normal", size: "medium", speed: "slow", zoom: "1", duration: "60" },
+    defaults: { posture: "stand", part: "hip", shift: "normal", size: "medium", speed: "slow", zoom: "auto", duration: "60" },
   },
 };
 // 保存された設定(ゲームごと・端末に記憶)
@@ -442,11 +442,12 @@ function choosePose(sets) {
 
 // landmark: 0=鼻 11=左肩 12=右肩 15=左手首 16=右手首 19=左人差指 20=右人差指 23=左腰 24=右腰(本人から見た左右)
 function updateTracking(landmarks) {
-  // ズーム: 映像中央を切り出して拡大するのに合わせて座標も変換する
-  const z = state.zoom;
+  // ズーム/オートフレーミング: 切り出し矩形に合わせて座標を変換する(検出はカメラ全体で行っている)
+  const W = canvas.width, H = canvas.height;
+  const { sx, sy, sw, sh } = state.crop;
   const toScreen = (nx, ny) => ({
-    x: ((1 - nx) - 0.5) * z * canvas.width + canvas.width / 2,
-    y: (ny - 0.5) * z * canvas.height + canvas.height / 2,
+    x: (1 - (nx * W - sx) / sw) * W,
+    y: ((ny * H - sy) / sh) * H,
   });
   const vis = i => landmarks[i].visibility ?? 1;
   const smooth = (prev, cur, a = 0.5) => {
@@ -479,8 +480,19 @@ function updateTracking(landmarks) {
 
   // 肩幅(カメラとの距離が変わっても感度を一定にするための基準)
   if (vis(11) > 0.5 && vis(12) > 0.5) {
-    const w = Math.abs(landmarks[11].x - landmarks[12].x) * canvas.width * z;
+    const w = Math.abs(landmarks[11].x - landmarks[12].x) * W * state.zoomCur;
     if (w > 10) track.bodyScale = track.bodyScale ? track.bodyScale + (w - track.bodyScale) * 0.2 : w;
+
+    // オートフレーミング: 肩幅が画面の約22%になるようゆっくりズームし、胸のあたりを中心に追従する
+    if (state.zoomMode === "auto") {
+      const wNorm = Math.abs(landmarks[11].x - landmarks[12].x);
+      const targetZ = Math.min(2.2, Math.max(1, 0.22 / Math.max(wNorm, 0.05)));
+      state.zoomCur += (targetZ - state.zoomCur) * 0.03;
+      const cx = (landmarks[11].x + landmarks[12].x) / 2;
+      const cy = (landmarks[11].y + landmarks[12].y) / 2 + 0.08;
+      state.panX += (cx - state.panX) * 0.05;
+      state.panY += (cy - state.panY) * 0.05;
+    }
   }
 }
 
@@ -495,7 +507,13 @@ if (DEBUG) {
 }
 
 // ================= エンジン =================
-const state = { running: false, score: 0, total: 0, remainMs: 0, clock: 0, lastReal: 0, zoom: 1 };
+const state = {
+  running: false, score: 0, total: 0, remainMs: 0, clock: 0, lastReal: 0,
+  zoomMode: "auto",          // "auto" または固定倍率の文字列
+  zoomCur: 1,                // 現在のズーム倍率(自動モードではゆっくり追従)
+  panX: 0.5, panY: 0.5,      // 切り出し中心(自動モードで本人を追う)
+  crop: null,                // 今フレームの切り出し矩形
+};
 let currentGame = null; // 実行中のゲームロジック
 
 function drawHandMarkers(handR) {
@@ -533,6 +551,16 @@ function mainLoop() {
   const frameDt = state.lastReal ? Math.min(100, realNow - state.lastReal) : 16;
   state.lastReal = realNow;
 
+  // 切り出し矩形の更新(パン位置は端で見切れないようクランプ)
+  {
+    const sw = canvas.width / state.zoomCur, sh = canvas.height / state.zoomCur;
+    state.crop = {
+      sx: Math.min(Math.max(state.panX * canvas.width - sw / 2, 0), canvas.width - sw),
+      sy: Math.min(Math.max(state.panY * canvas.height - sh / 2, 0), canvas.height - sh),
+      sw, sh,
+    };
+  }
+
   // 追跡
   if (DEBUG) {
     track.poseVisible = true;
@@ -554,18 +582,13 @@ function mainLoop() {
   }
   $("statusMsg").style.display = track.poseVisible ? "none" : "block";
 
-  // 背景(ズーム時は映像中央を切り出して拡大表示)
+  // 背景(切り出し矩形を画面いっぱいにミラー表示。ズーム1倍なら全体表示と同じ)
   if (DEBUG) {
     ctx.fillStyle = "#22304a"; ctx.fillRect(0, 0, canvas.width, canvas.height);
   } else {
+    const c = state.crop;
     ctx.save(); ctx.scale(-1, 1);
-    if (state.zoom > 1) {
-      const vw = video.videoWidth, vh = video.videoHeight;
-      const sw = vw / state.zoom, sh = vh / state.zoom;
-      ctx.drawImage(video, (vw - sw) / 2, (vh - sh) / 2, sw, sh, -canvas.width, 0, canvas.width, canvas.height);
-    } else {
-      ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
-    }
+    ctx.drawImage(video, c.sx, c.sy, c.sw, c.sh, -canvas.width, 0, canvas.width, canvas.height);
     ctx.restore();
   }
 
@@ -639,7 +662,9 @@ async function startGame(gameId) {
   track.hands = { left: null, right: null };
   track.parts = { head: null, shoulder: null, hip: null };
   track.bodyScale = null; track.lastVideoTime = -1;
-  state.zoom = parseFloat(vals.zoom || "1");
+  state.zoomMode = vals.zoom || "auto";
+  state.zoomCur = state.zoomMode === "auto" ? 1 : parseFloat(state.zoomMode);
+  state.panX = 0.5; state.panY = 0.5; state.crop = null;
   poseLock = null;
   $("scoreVal").textContent = "0";
   requestAnimationFrame(mainLoop);
