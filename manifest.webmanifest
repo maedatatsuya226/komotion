@@ -1,0 +1,12 @@
+{
+  "name": "こもーしょん",
+  "short_name": "こもーしょん",
+  "description": "こもんじデジタルリハビリ - カメラで体の動きを検出するリーチ・バランス訓練アプリ",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FAF3E7",
+  "theme_color": "#FAF3E7",
+  "icons": [
+    { "src": "icon.png", "sizes": "any", "type": "image/png" }
+  ]
+}
